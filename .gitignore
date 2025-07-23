@@ -1,3 +1,6 @@
+# Jest Coverage Files
+test/coverage-jest
+
 # Logs
 logs
 *.log
