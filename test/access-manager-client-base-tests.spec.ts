@@ -34,6 +34,11 @@ describe("AccessManagerClientBase Tests", () => {
     it("SendGetRequestAsync(): Success test.", async() => {
         
         //await testClientBase.SendGetRequestAsync(new URL("http://192.168.0.253:5000/api/v1/groups"));
+
+        let testUrl: URL = new URL("http://192.168.9.1");
+        testUrl.pathname += "api/v1/";
+        console.log(testUrl.href);
+        //let testUrl: URL = new URL("junk");
     });
 
     it("DeserializeResponseDataToHttpErrorResponse(): Success test.", done => {
@@ -60,8 +65,6 @@ describe("AccessManagerClientBase Tests", () => {
         };
 
         result = testClientBase.DeserializeResponseDataToHttpErrorResponse(minimalHttpErrorResponseResponseData);
-
-        console.log(result);
 
         expect(result?.Code).toBe(code);
         expect(result?.Message).toBe(message);

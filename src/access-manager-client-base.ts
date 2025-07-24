@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import { IUniqueStringifier } from './iunique-stringifier';
 import { HttpRequestMethod } from './http-request-method';
 import { HttpErrorResponse } from './models/http-error-response';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 
 /**
  * @name AccessManagerClientBase
@@ -29,16 +30,62 @@ import axios, { AxiosResponse } from 'axios';
  */
 export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess> {
 
+    /** The base URL for the hosted Web API. */
+    protected baseUrl: URL;
+    /** Maps an HTTP status code to a function which throws a matching {@link Error} to the status code.  The function accepts 1 parameter: the {@link HttpErrorResponse} representing the exception. */
+    protected statusCodeToErrorThrowingFunctionMap: Map<number, (httpErrorResponse: HttpErrorResponse) => {}>;
+
+    constructor() {
+        // TODO: Have option to pass AxiosRequestConfig
+        //   https://axios-http.com/docs/req_config
+        //   https://stackoverflow.com/questions/66062849/how-to-set-axiosconfig-using-typescript
+    }
 
     // #region Private/Protected Methods
 
     protected async SendGetRequestAsync<T>(requestUrl: URL) : Promise<T> {
 
         let response: AxiosResponse = await axios.get(requestUrl.toString());
-
+        
         console.log(response);
 
         throw new Error();
+    }
+
+    /**
+     * @name SetBaseConstructorParameters
+     * @desc Performs setup for a minimal/common set of constructor parameters.
+     * 
+     * @param baseUrl - The base URL for the hosted Web API.
+     * @param userStringifier - A string converter for users.  Used to convert strings sent to and received from the web API from/to {@link TUser} instances.
+     * @param groupStringifier - A string converter for groups.  Used to convert strings sent to and received from the web API from/to {@link TGroup} instances.
+     * @param applicationComponentStringifier - A string converter for application components.  Used to convert strings sent to and received from the web API from/to {@link TComponent} instances.
+     * @param accessLevelStringifier - A string converter for access levels.  Used to convert strings sent to and received from the web API from/to {@link TAccess} instances.
+     */
+    protected SetBaseConstructorParameters(
+        baseUrl: URL,
+        userStringifier: IUniqueStringifier<TUser>, 
+        groupStringifier: IUniqueStringifier<TGroup>, 
+        applicationComponentStringifier: IUniqueStringifier<TComponent>, 
+        accessLevelStringifier: IUniqueStringifier<TAccess>, 
+    ) : void {
+        this.InitializeBaseUrl(baseUrl);
+    }
+
+    /**
+     * @name InitializeBaseUrl
+     * @desc Adds an appropriate path suffix to the specified 'baseUrl' constructor parameter.
+     * 
+     * @param baseUrl - The base URL to initialize.
+     */
+    protected InitializeBaseUrl(baseUrl: URL) : void {
+
+        try {
+            this.baseUrl = new URL(baseUrl.pathname += "api/v1/");
+        }
+        catch (e) {
+            throw new Error(`Failed to append API suffix to base URL '${baseUrl.href}'.`, { cause: e });
+        }
     }
 
     /**
@@ -53,11 +100,16 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
     protected HandleNonSuccessResponseStatus(method: HttpRequestMethod, requestUrl: URL, status: number, responseData: any) : void {
 
         let baseExceptionMessage: string = `Failed to call URL '${requestUrl.toString()}' with '${method}' method.  Received non-succces HTTP response status '${status}'`;
+
+        let httpErrorResponse: HttpErrorResponse | null = this.DeserializeResponseDataToHttpErrorResponse(responseData);
+        if (httpErrorResponse !== null) {
+
+        }
     }
 
     /**
      * @name DeserializeResponseDataToHttpErrorResponse
-     * @desc Attempts to deserialize the body/data of an HTTP response to an HttpErrorResponse instance.
+     * @desc Attempts to deserialize the body/data of an HTTP response to an {@link HttpErrorResponse} instance.
      * 
      * @param responseData - The response body/data to deserialize.
      * @returns The deserialized response body, or null if the response could not be deserialized (e.g. null).
