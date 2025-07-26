@@ -16,8 +16,13 @@
 
 import { IUniqueStringifier } from './iunique-stringifier';
 import { HttpRequestMethod } from './http-request-method';
+import { NameValuePair } from './models/name-value-pair';
 import { HttpErrorResponse } from './models/http-error-response';
-import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
+import { NotFoundError } from './errors/not-found-error';
+import { ElementNotFoundError } from './errors/element-not-found-error';
+import { IAxiosShim } from './iaxios-shim';
+import { DefaultAxios } from './default-axios';
+import axios, { AxiosResponse, AxiosRequestConfig, AxiosHeaders, AxiosError } from 'axios';
 
 /**
  * @name AccessManagerClientBase
@@ -30,26 +35,109 @@ import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
  */
 export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess> {
 
+    // TODO:
+    //   Create AccessManagerStringElementClient
+
+    static readonly javaScriptObjectType: string = "object";
+
+    /** Axios request config to use for making HTTP requests. */
+    protected requestConfig: AxiosRequestConfig;
     /** The base URL for the hosted Web API. */
     protected baseUrl: URL;
     /** Maps an HTTP status code to a function which throws a matching {@link Error} to the status code.  The function accepts 1 parameter: the {@link HttpErrorResponse} representing the exception. */
-    protected statusCodeToErrorThrowingFunctionMap: Map<number, (httpErrorResponse: HttpErrorResponse) => {}>;
+    protected statusCodeToErrorThrowingFunctionMap: Map<number, (httpErrorResponse: HttpErrorResponse) => void>;
+    /** A string converter for users.  Used to convert strings sent to and received from the web API from/to {@link TUser} instances. */
+    protected userStringifier: IUniqueStringifier<TUser>;
+    /** A string converter for groups.  Used to convert strings sent to and received from the web API from/to {@link TGroup} instances. */
+    protected groupStringifier: IUniqueStringifier<TGroup>;
+    /** A string converter for application components.  Used to convert strings sent to and received from the web API from/to {@link TComponent} instances. */
+    protected applicationComponentStringifier: IUniqueStringifier<TComponent>;
+    /** A string converter for access levels.  Used to convert strings sent to and received from the web API from/to {@link TAccess} instances. */
+    protected accessLevelStringifier: IUniqueStringifier<TAccess>;
+    /** Acts as a {@link https://en.wikipedia.org/wiki/Shim_(computing)| shim} to axios. */
+    protected axiosShim: IAxiosShim;
 
-    constructor() {
-        // TODO: Have option to pass AxiosRequestConfig
-        //   https://axios-http.com/docs/req_config
-        //   https://stackoverflow.com/questions/66062849/how-to-set-axiosconfig-using-typescript
+    /**
+     * @desc Creates an AccessManagerClientBase.
+     * 
+     * @param baseUrl - The base URL for the hosted Web API.
+     * @param userStringifier - A string converter for users.  Used to convert strings sent to and received from the web API from/to {@link TUser} instances.
+     * @param groupStringifier - A string converter for groups.  Used to convert strings sent to and received from the web API from/to {@link TGroup} instances.
+     * @param applicationComponentStringifier - A string converter for application components.  Used to convert strings sent to and received from the web API from/to {@link TComponent} instances.
+     * @param accessLevelStringifier - A string converter for access levels.  Used to convert strings sent to and received from the web API from/to {@link TAccess} instances.
+     * @param requestConfig - (Optional) axios request config to use for making HTTP requests.  Allows specifying request headers, timeouts, etc.
+     * @param axiosShim - (Optional) {@link https://en.wikipedia.org/wiki/Shim_(computing)| Shim} to axios for use in unit testing.
+     */
+    constructor(
+        baseUrl: URL,
+        userStringifier: IUniqueStringifier<TUser>, 
+        groupStringifier: IUniqueStringifier<TGroup>, 
+        applicationComponentStringifier: IUniqueStringifier<TComponent>, 
+        accessLevelStringifier: IUniqueStringifier<TAccess>, 
+        requestConfig: AxiosRequestConfig = { headers: new AxiosHeaders() },
+        axiosShim: IAxiosShim = new DefaultAxios()
+    ) {
+        this.SetBaseConstructorParameters(
+            baseUrl, 
+            userStringifier,
+            groupStringifier,
+            applicationComponentStringifier,
+            accessLevelStringifier,
+            requestConfig, 
+            axiosShim
+        );
     }
 
     // #region Private/Protected Methods
 
-    protected async SendGetRequestAsync<T>(requestUrl: URL) : Promise<T> {
+    /**
+     * @name SendGetRequestAsync
+     * @desc Sends an HTTP GET request, expecting a 200 status returned to indicate success.
+     * 
+     * @param requestUrl - The URL of the request.
+     * @returns The body returned by the response to the request.
+     */
+    protected async SendGetRequestAsync(requestUrl: URL) : Promise<any> {
 
-        let response: AxiosResponse = await axios.get(requestUrl.toString());
+        let response: AxiosResponse;
+        try {
+            response = await this.axiosShim.get(requestUrl.href, this.requestConfig);
+        }
+        catch (error: any) {
+            console.log(error);
+            let typedError = <AxiosError>error;
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+        }
+        return response!.data;
+    }
+
+    /**
+     * @name SendGetRequestForContainsMethodAsync
+     * @desc Sends an HTTP GET request, expecting either a 200 or 404 status returned.
+     * 
+     * @param requestUrl - The URL of the request.
+     * @returns True in the case a 200 response status is received, or false in the case a 404 status is received.
+     */
+    protected async SendGetRequestForContainsMethodAsync(requestUrl: URL) : Promise<boolean> {
         
-        console.log(response);
+        let returnValue: boolean = false;
+        let response: AxiosResponse;
+        try {
+            response = await this.axiosShim.get(requestUrl.href, this.requestConfig);
+        }
+        catch (error: any) {
+            console.log(error);
+            let typedError = <AxiosError>error;
+            if (typedError.status! === 404) {
+                returnValue = false;
+            }
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+        }
+        if (response!.status === 200) {
+            returnValue = true;
+        }
 
-        throw new Error();
+        return returnValue;
     }
 
     /**
@@ -61,6 +149,8 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      * @param groupStringifier - A string converter for groups.  Used to convert strings sent to and received from the web API from/to {@link TGroup} instances.
      * @param applicationComponentStringifier - A string converter for application components.  Used to convert strings sent to and received from the web API from/to {@link TComponent} instances.
      * @param accessLevelStringifier - A string converter for access levels.  Used to convert strings sent to and received from the web API from/to {@link TAccess} instances.
+     * @param requestConfig - Axios request config to use for making HTTP requests.
+     * @param axiosShim - (Optional) {@link https://en.wikipedia.org/wiki/Shim_(computing)| Shim} to axios for use in unit testing.
      */
     protected SetBaseConstructorParameters(
         baseUrl: URL,
@@ -68,8 +158,33 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         groupStringifier: IUniqueStringifier<TGroup>, 
         applicationComponentStringifier: IUniqueStringifier<TComponent>, 
         accessLevelStringifier: IUniqueStringifier<TAccess>, 
+        requestConfig: AxiosRequestConfig, 
+        axiosShim: IAxiosShim
     ) : void {
         this.InitializeBaseUrl(baseUrl);
+        this.userStringifier = userStringifier;
+        this.groupStringifier = groupStringifier;
+        this.applicationComponentStringifier = applicationComponentStringifier;
+        this.accessLevelStringifier = accessLevelStringifier;
+        this.requestConfig = requestConfig;
+        if (requestConfig.headers === undefined) {
+            requestConfig.headers = new AxiosHeaders();
+        }
+        this.requestConfig.headers!["Accept"] = "application/json";
+        this.axiosShim = axiosShim;
+        this.InitializeStatusCodeToErrorThrowingFunctionMap();
+    }
+
+    /**
+     * @name AppendPathToBaseUrl
+     * @desc Concatenates the specified path (with no leading forward slash) to the 'baseUrl' property and returns it as a new {@link URL} 
+     * 
+     * @param path - The path to concatenate.
+     * @returns The concatenated URL.
+     */
+    protected AppendPathToBaseUrl(path: string) : URL {
+
+        return this.baseUrl = new URL(this.baseUrl.href += path);
     }
 
     /**
@@ -81,11 +196,44 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
     protected InitializeBaseUrl(baseUrl: URL) : void {
 
         try {
-            this.baseUrl = new URL(baseUrl.pathname += "api/v1/");
+            this.baseUrl = new URL(baseUrl.href += "api/v1/");
         }
         catch (e) {
             throw new Error(`Failed to append API suffix to base URL '${baseUrl.href}'.`, { cause: e });
         }
+    }
+
+    /**
+     * @name InitializeStatusCodeToErrorThrowingFunctionMap
+     * @desc Initializes the 'statusCodeToExceptionThrowingActionMap' member.
+     */
+    protected InitializeStatusCodeToErrorThrowingFunctionMap() {
+        this.statusCodeToErrorThrowingFunctionMap = new Map<number, (httpErrorResponse: HttpErrorResponse) => {}>;
+        this.statusCodeToErrorThrowingFunctionMap.set(
+            404, 
+            (httpErrorResponse: HttpErrorResponse) => {
+                if (httpErrorResponse.Code === "UserNotFoundException") {
+                    let user: string = this.GetHttpErrorResponseAttributeValue(httpErrorResponse, "User");
+                    throw new ElementNotFoundError(httpErrorResponse.Message, "User", user);
+                }
+                else if (httpErrorResponse.Code === "GroupNotFoundException") {
+                    let group: string = this.GetHttpErrorResponseAttributeValue(httpErrorResponse, "Group");
+                    throw new ElementNotFoundError(httpErrorResponse.Message, "Group", group);
+                }
+                else if (httpErrorResponse.Code === "EntityTypeNotFoundException") {
+                    let entityType: string = this.GetHttpErrorResponseAttributeValue(httpErrorResponse, "EntityType");
+                    throw new ElementNotFoundError(httpErrorResponse.Message, "EntityType", entityType);
+                }
+                else if (httpErrorResponse.Code === "EntityNotFoundException") {
+                    let entity: string = this.GetHttpErrorResponseAttributeValue(httpErrorResponse, "Entity");
+                    throw new ElementNotFoundError(httpErrorResponse.Message, "Entity", entity);
+                }
+                else {
+                    let resourceId: string =this.GetHttpErrorResponseAttributeValue(httpErrorResponse, "ResourceId");
+                    throw new NotFoundError(httpErrorResponse.Message, resourceId);
+                }
+            }
+        );
     }
 
     /**
@@ -99,11 +247,31 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      */
     protected HandleNonSuccessResponseStatus(method: HttpRequestMethod, requestUrl: URL, status: number, responseData: any) : void {
 
-        let baseExceptionMessage: string = `Failed to call URL '${requestUrl.toString()}' with '${method}' method.  Received non-succces HTTP response status '${status}'`;
+        let baseExceptionMessage: string = `Failed to call URL '${requestUrl.toString()}' with '${method}' method.  Received non-succces HTTP response status ${status}`;
 
         let httpErrorResponse: HttpErrorResponse | null = this.DeserializeResponseDataToHttpErrorResponse(responseData);
         if (httpErrorResponse !== null) {
-
+            if (this.statusCodeToErrorThrowingFunctionMap.has(status) == true) {
+                let errorThrowingFunction: (httpErrorResponse: HttpErrorResponse) => void = this.statusCodeToErrorThrowingFunctionMap.get(status)!;
+                errorThrowingFunction(httpErrorResponse);
+            }
+            else {
+                let exceptionMessagePostfix: string = `, error code '${httpErrorResponse.Code}', and error message '${httpErrorResponse.Message}'.`
+                throw new Error(baseExceptionMessage + exceptionMessagePostfix);
+            }
+        }
+        else {
+            if (responseData !== null) {
+                if (typeof(responseData) === AccessManagerClientBase.javaScriptObjectType) {
+                    throw new Error(baseExceptionMessage + `, and response body '${JSON.stringify(responseData)}'.`);
+                }
+                else {
+                    throw new Error(baseExceptionMessage + `, and response body '${responseData.toString()}'.`);
+                }
+            } 
+            else {
+                throw new Error(baseExceptionMessage + ".");
+            }
         }
     }
 
@@ -119,27 +287,54 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         if (responseData === null) {
             return null;
         }
-        if (responseData.hasOwnProperty("code") == true && responseData.hasOwnProperty("message")) {
-            let code: string = responseData["code"];
-            let message: string = responseData["message"];
-            let target: string | null = null;
-            let attributes: Array<[string, string]> = [];
-            let innerError: HttpErrorResponse | null = null;
-            if (responseData.hasOwnProperty("target") == true) {
-                target = responseData["target"];
-            }
-            if (responseData.hasOwnProperty("attributes") == true) {
-                attributes = responseData["attributes"];
-            }
-            if (responseData.hasOwnProperty("innerError") == true) {
-                innerError = responseData["innerError"];
-            }
+        if (responseData.hasOwnProperty("error") && typeof(responseData.error) === AccessManagerClientBase.javaScriptObjectType) {
+            let error: any = responseData.error;
+            if (error.hasOwnProperty("code") == true && error.hasOwnProperty("message")) {
+                let code: string = error["code"];
+                let message: string = error["message"];
+                let target: string | null = null;
+                let attributes: Array<NameValuePair> = [];
+                let innerError: HttpErrorResponse | null = null;
+                if (error.hasOwnProperty("target") == true) {
+                    target = error["target"];
+                }
+                if (error.hasOwnProperty("attributes") == true) {
+                    let attributesArray: Array<any> = error["attributes"];
+                    for (let i: number = 0; i < attributesArray.length; i++) {
+                        attributes.push(new NameValuePair(
+                            attributesArray[i].name,
+                            attributesArray[i].value,
+                        ));
+                    }
+                }
+                if (error.hasOwnProperty("innerError") == true) {
+                    innerError = error["innerError"];
+                }
 
-            return new HttpErrorResponse(code, message, target, attributes, innerError);
+                return new HttpErrorResponse(code, message, target, attributes, innerError);
+            }
         }
-        else {
-            return null;
+        
+        return null;
+    }
+
+    /**
+     * @name GetHttpErrorResponseAttributeValue
+     * @desc Gets the value of the specified {@link HttpErrorResponse} attribute.
+     * 
+     * @param httpErrorResponse - The {@link HttpErrorResponse} to retrieve the attribute from.
+     * @param attributeName - The name of the attribute to retrieve.
+     * @returns The value of the attribute, or a blank string if no attribute with that name exists.
+     */
+    protected GetHttpErrorResponseAttributeValue(httpErrorResponse: HttpErrorResponse, attributeName: string) : string {
+
+        for (let i: number = 0; i < httpErrorResponse.Attributes.length; i++) {
+            if (httpErrorResponse.Attributes[i].Name === attributeName) {
+                return httpErrorResponse.Attributes[i].Value;
+            }
         }
+
+        return "";
     }
 
     // #endregion

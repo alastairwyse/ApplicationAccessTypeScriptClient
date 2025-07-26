@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { NameValuePair } from './name-value-pair';
+
 /**
  * @name HttpErrorResponse
  * @desc Container class holding the data returned from a REST API when an error occurs.
@@ -27,7 +29,7 @@ export class HttpErrorResponse {
     /** The target of the error. */
     protected target: string | null;
     /** A collection of key/value pairs which give additional details of the error. */
-    protected attributes: Array<[string, string]>;
+    protected attributes: Array<NameValuePair>;
     /** The error which caused this error. */
     protected innerError: HttpErrorResponse | null;
 
@@ -58,7 +60,7 @@ export class HttpErrorResponse {
     /**
      * @returns A collection of key/value pairs which give additional details of the error.
      */
-    get Attributes(): Array<[string, string]> {
+    get Attributes(): Array<NameValuePair> {
 
         return this.attributes;
     }
@@ -85,7 +87,7 @@ export class HttpErrorResponse {
         code: string, 
         message: string, 
         target: string | null = null, 
-        attributes: Array<[string, string]> = Array<[string, string]>(), 
+        attributes: Array<NameValuePair> = Array<NameValuePair>(), 
         innerError: HttpErrorResponse | null = null, 
     ) {
 

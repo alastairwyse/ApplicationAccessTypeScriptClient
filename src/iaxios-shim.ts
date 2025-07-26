@@ -14,31 +14,14 @@
  * limitations under the License.
  */
 
+import { AxiosResponse, AxiosRequestConfig } from 'axios';
+
 /**
- * @name NotFoundError
- * @desc The error that is thrown when a resource doesn't exist or could not be found.
+ * @name IAxiosShim
+ * @desc Defines methods which perform HTTP requests via axios.
+ *       Acts as a {@link https://en.wikipedia.org/wiki/Shim_(computing)| shim} to axios for use in unit testing.
  */
-export class NotFoundError extends Error {
-
-    /** A unique identifier for the resource. */
-    protected resourceId: string;
-
-    /**
-     * @returns - A unique identifier for the resource.
-     */
-    get ResourceId(): string {
-
-        return this.resourceId;
-    }
-
-    /**
-     * @desc Creates a NotFoundError.
-     * 
-     * @param message - Details of the error.
-     * @param resourceId - A unique identifier for the resource.
-     */
-    constructor(message: string, resourceId: string) {
-        super(message);
-        this.resourceId = resourceId;
-    }
+export interface IAxiosShim {
+    
+    get(url: string, config: AxiosRequestConfig<any>) : Promise<AxiosResponse<any, any>>;
 }

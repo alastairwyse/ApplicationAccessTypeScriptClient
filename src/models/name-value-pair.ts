@@ -15,30 +15,40 @@
  */
 
 /**
- * @name NotFoundError
- * @desc The error that is thrown when a resource doesn't exist or could not be found.
+ * @name NameValuePair
+ * @desc Container class holding a name and value pair.
  */
-export class NotFoundError extends Error {
+export class NameValuePair {
 
-    /** A unique identifier for the resource. */
-    protected resourceId: string;
+    /** The name. */
+    protected name: string;
+    /** The value. */
+    protected value: string;
 
     /**
-     * @returns - A unique identifier for the resource.
+     * @returns The name.
      */
-    get ResourceId(): string {
+    get Name(): string {
 
-        return this.resourceId;
+        return this.name;
     }
 
     /**
-     * @desc Creates a NotFoundError.
-     * 
-     * @param message - Details of the error.
-     * @param resourceId - A unique identifier for the resource.
+     * @returns The value.
      */
-    constructor(message: string, resourceId: string) {
-        super(message);
-        this.resourceId = resourceId;
+    get Value(): string {
+
+        return this.value;
+    }
+
+    /**
+     * @desc Creates a NameValuePair.
+     * 
+     * @param name - The name.
+     * @param value - The value.
+     */
+    constructor(name: string, value: string) {
+        this.name = name;
+        this.value = value;
     }
 }

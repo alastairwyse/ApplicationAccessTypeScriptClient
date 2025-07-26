@@ -11,6 +11,8 @@
   "dependencies": {
     "@types/jest": "^30.0.0",
     "axios": "^1.10.0",
-    "ts-jest": "^29.4.0"
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
   }
 }

@@ -34,14 +34,22 @@ export class ElementNotFoundError extends NotFoundError {
     }
 
     /**
+     * @returns - The value of the element.
+     */
+    get ElementValue(): string {
+
+        return this.resourceId;
+    }
+
+    /**
      * @desc Creates an ElementNotFoundError.
      * 
      * @param message - Details of the error.
      * @param elementType - The type of the element.
-     * @param resourceId - A unique identifier for the resource.
+     * @param elementValue - The value of the element.
      */
-    constructor(message: string, elementType: string, resourceId: string) {
-        super(message, resourceId);
+    constructor(message: string, elementType: string, elementValue: string) {
+        super(message, elementValue);
 
         this.elementType = elementType;
     }

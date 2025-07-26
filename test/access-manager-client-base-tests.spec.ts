@@ -14,18 +14,70 @@
  * limitations under the License.
  */
 
+import { HttpRequestMethod } from '../src/http-request-method';
 import { HttpErrorResponse } from '../src/models/http-error-response';
+import { NotFoundError } from '../src/errors/not-found-error';
+import { ElementNotFoundError } from '../src/errors/element-not-found-error';
+import { IAxiosShim } from '../src/iaxios-shim';
 import { AccessManagerClientBase } from '../src/access-manager-client-base';
 import { describe } from '@jest/globals';
+
+
+// TODO: Remove test imports'
+import axios, { AxiosResponse, AxiosRequestConfig, AxiosError, AxiosHeaders } from 'axios';
+import { StringUniqueStringifier } from '../src/string-unique-stringifier';
+
 
 /**
  * @desc Unit tests for the Buffer class.
  */
 describe("AccessManagerClientBase Tests", () => {
+    let mockAxiosShim: IAxiosShim; 
     let testClientBase: AccessManagerClientBaseWithProtectedMethods<String, String, String, String>;
 
+
+/*  MOCKING AxiosError
+        let responseData: AxiosResponse<unknown, any> = {
+            data: {
+                error: {
+                    code: 'UserNotFoundException',
+                    message: "User 'sdf' does not exist. (Parameter 'user')",
+                    target: 'ThrowUserDoesntExistException',
+                    attributes: [       
+                        {
+                            name: "ParameterName",
+                            value: "user"
+                        },
+                        {
+                            name: "User",
+                            value: "sdf"
+                        }
+                    ]
+                }
+            },
+            status: 404, 
+            statusText: "Not Found",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        let axiosError = new AxiosError("Request failed with status code 404", "ERR_BAD_REQUEST");
+        axiosError.response = responseData;
+*/
+
+
     beforeEach(() => {
-        testClientBase = new AccessManagerClientBaseWithProtectedMethods();
+        mockAxiosShim = <IAxiosShim><unknown>jest.mock("../src/iaxios-shim");
+        testClientBase = new AccessManagerClientBaseWithProtectedMethods(
+            new URL("http://127.0.0.1:5170/"), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new Object(), 
+            mockAxiosShim
+        );
     });
 
     afterEach(() => { 
@@ -33,12 +85,311 @@ describe("AccessManagerClientBase Tests", () => {
 
     it("SendGetRequestAsync(): Success test.", async() => {
         
-        //await testClientBase.SendGetRequestAsync(new URL("http://192.168.0.253:5000/api/v1/groups"));
+        testClientBase = new AccessManagerClientBaseWithProtectedMethods(
+            new URL("http://127.0.0.1:5170/"), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier()
+        );
 
-        let testUrl: URL = new URL("http://192.168.9.1");
-        testUrl.pathname += "api/v1/";
-        console.log(testUrl.href);
-        //let testUrl: URL = new URL("junk");
+        let result = await testClientBase.SendGetRequestAsync(new URL("http://192.168.0.253:5000/api/v1/groups"));
+        console.log(JSON.stringify(result));
+    });
+
+    it("HandleNonSuccessResponseStatus(): UserNotFoundException.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/userToGroupMappings/user/sdf?includeIndirectMappings=true");
+        let responseData: object = {
+            error: {
+                code: 'UserNotFoundException',
+                message: "User 'sdf' does not exist. (Parameter 'user')",
+                target: 'ThrowUserDoesntExistException',
+                attributes: [    
+                    {
+                        name: "ParameterName",
+                        value: "user"
+                    },
+                    {
+                        name: "User",
+                        value: "sdf"
+                    }
+                ]
+            }
+        }
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 404, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(ElementNotFoundError);
+            expect(e.message).toBe("User 'sdf' does not exist. (Parameter 'user')");
+            expect(e.ResourceId).toEqual("sdf");
+            expect(e.ElementType).toEqual("User");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): GroupNotFoundException.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/groupToGroupMappings/group/abc?includeIndirectMappings=false");
+        let responseData: object = {
+            error: {
+                code: 'GroupNotFoundException',
+                message: "Group 'abc' does not exist. (Parameter 'group')",
+                target: "ThrowGroupDoesntExistException",
+                attributes: [
+                    {
+                        "name": "ParameterName",
+                        "value": "group"
+                    },
+                    {
+                        "name": "Group",
+                        "value": "abc"
+                    }
+                ]
+            }
+        }
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 404, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(ElementNotFoundError);
+            expect(e.message).toBe("Group 'abc' does not exist. (Parameter 'group')");
+            expect(e.ResourceId).toEqual("abc");
+            expect(e.ElementType).toEqual("Group");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): EntityTypeNotFoundException.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/entityTypes/dfg/entities");
+        let responseData: object = {
+            error: {
+                code: "EntityTypeNotFoundException",
+                message: "Entity type 'dfg' does not exist. (Parameter 'entityType')",
+                target: "ThrowEntityTypeDoesntExistException",
+                attributes: [
+                    {
+                        "name": "ParameterName",
+                        "value": "entityType"
+                    },
+                    {
+                        "name": "EntityType",
+                        "value": "dfg"
+                    }
+                ]
+            }
+        }
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 404, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(ElementNotFoundError);
+            expect(e.message).toBe("Entity type 'dfg' does not exist. (Parameter 'entityType')");
+            expect(e.ResourceId).toEqual("dfg");
+            expect(e.ElementType).toEqual("EntityType");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): EntityNotFoundException.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/entityTypes/ProductLines/entities/ghjkl");
+        let responseData: object = {
+            error: {
+                code: "EntityNotFoundException",
+                message: "Entity 'ghjkl' does not exist. (Parameter 'entity')",
+                target: "ThrowEntityDoesntExistException",
+                attributes: [
+                    {
+                        "name": "ParameterName",
+                        "value": "entity"
+                    },
+                    {
+                        "name": "EntityType",
+                        "value": "ProductLines"
+                    },
+                    {
+                        "name": "Entity",
+                        "value": "ghjkl"
+                    }
+                ]
+            }
+        }
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Delete, url, 404, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(ElementNotFoundError);
+            expect(e.message).toBe("Entity 'ghjkl' does not exist. (Parameter 'entity')");
+            expect(e.ResourceId).toEqual("ghjkl");
+            expect(e.ElementType).toEqual("Entity");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): NotFoundException.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
+        let responseData: object = {
+            error: {
+                code: "NotFoundException",
+                message: "Group 'xyz' does not exist.",
+                target: "ContainsGroup",
+                attributes: [
+                    {
+                        "name": "ResourceId",
+                        "value": "xyz"
+                    }
+                ]
+            }
+        }
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Delete, url, 404, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(NotFoundError);
+            expect(e.message).toBe("Group 'xyz' does not exist.");
+            expect(e.ResourceId).toEqual("xyz");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): ServiceUnavailableException.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
+        let responseData: object = {
+            error: {
+                code: "ServiceUnavailableException",
+                message: "The service is unavailable due to an interal error.",
+                target: "MoveNext"
+            }
+        }
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 503, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/groups/xyz' with 'Get' method.  Received non-succces HTTP response status 503, error code 'ServiceUnavailableException', and error message 'The service is unavailable due to an interal error.'.");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): String response body.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
+        let responseData: string = "Error string";
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 500, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/groups/xyz' with 'Get' method.  Received non-succces HTTP response status 500, and response body 'Error string'.");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): Object response body.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
+        let responseData: any = { };
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 500, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/groups/xyz' with 'Get' method.  Received non-succces HTTP response status 500, and response body '{}'.");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): Empty string response body.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
+        let responseData: string = "";
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 500, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/groups/xyz' with 'Get' method.  Received non-succces HTTP response status 500, and response body ''.");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
+    });
+
+    it("HandleNonSuccessResponseStatus(): Null response body.", done => {
+        
+        let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
+        let responseData: any = null;
+        let exceptionCaught: boolean = false;
+        
+        try {
+            testClientBase.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, url, 500, responseData);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/groups/xyz' with 'Get' method.  Received non-succces HTTP response status 500.");
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
     });
 
     it("DeserializeResponseDataToHttpErrorResponse(): Success test.", done => {
@@ -51,7 +402,11 @@ describe("AccessManagerClientBase Tests", () => {
 
 
         let code = "GroupNotFoundException";
-        let nonHttpErrorResponseResponseData: object = { "code": "GroupNotFoundException" };
+        let nonHttpErrorResponseResponseData: object = { 
+            error: {
+                code: "GroupNotFoundException" 
+            }
+        };
 
         result = testClientBase.DeserializeResponseDataToHttpErrorResponse(nonHttpErrorResponseResponseData);
 
@@ -60,8 +415,10 @@ describe("AccessManagerClientBase Tests", () => {
 
         let message = "Group 'asda' does not exist. (Parameter 'group')";
         let minimalHttpErrorResponseResponseData: object = { 
-            "code": code,
-            "message": message
+            error: {
+                code: code,
+                message: message
+            }
         };
 
         result = testClientBase.DeserializeResponseDataToHttpErrorResponse(minimalHttpErrorResponseResponseData);
@@ -83,11 +440,13 @@ describe("AccessManagerClientBase Tests", () => {
         ]
         let innerError: HttpErrorResponse = new HttpErrorResponse("InnerErrorCode", "InnerErrorMessage");
         let fullHttpErrorResponseResponseData: object = { 
-            "code": code,
-            "message": message, 
-            "target": target, 
-            "attributes": attributes, 
-            "innerError": innerError
+            error: {
+                code: code,
+                message: message, 
+                target: target, 
+                attributes: attributes, 
+                innerError: innerError
+            }
         };
 
         result = testClientBase.DeserializeResponseDataToHttpErrorResponse(fullHttpErrorResponseResponseData);
@@ -95,7 +454,11 @@ describe("AccessManagerClientBase Tests", () => {
         expect(result?.Code).toBe(code);
         expect(result?.Message).toBe(message);
         expect(result?.Target).toBe(target);
-        expect(result?.Attributes).toBe(attributes);
+        expect(result?.Attributes.length).toBe(2);
+        expect(result?.Attributes[0].Name).toBe("ParameterName");
+        expect(result?.Attributes[0].Value).toBe("group");
+        expect(result?.Attributes[1].Name).toBe("Group");
+        expect(result?.Attributes[1].Value).toBe("asda");
         expect(result?.InnerError).toBe(innerError);
 
         
@@ -113,6 +476,11 @@ class AccessManagerClientBaseWithProtectedMethods<TUser, TGroup, TComponent, TAc
     public async SendGetRequestAsync<T>(requestUrl: URL) : Promise<T> {
 
         return await super.SendGetRequestAsync(requestUrl);
+    }
+
+    public HandleNonSuccessResponseStatus(method: HttpRequestMethod, requestUrl: URL, status: number, responseData: any) : void {
+
+        return super.HandleNonSuccessResponseStatus(method, requestUrl, status, responseData)
     }
 
     public DeserializeResponseDataToHttpErrorResponse(responseData: any) : HttpErrorResponse | null {
