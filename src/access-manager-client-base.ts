@@ -102,9 +102,10 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         let response: AxiosResponse;
         try {
             response = await this.axiosShim.get(requestUrl.href, this.requestConfig);
+            console.log(typeof(response));
+            console.log(response);
         }
         catch (error: any) {
-            console.log(error);
             let typedError = <AxiosError>error;
             this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
         }
@@ -118,7 +119,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      * @param requestUrl - The URL of the request.
      * @returns True in the case a 200 response status is received, or false in the case a 404 status is received.
      */
-    protected async SendGetRequestForContainsMethodAsync(requestUrl: URL) : Promise<boolean> {
+    protected async SendGetRequestForContainsMethodAsync(requestUrl: URL) : Promise<void> {
         
         let returnValue: boolean = false;
         let response: AxiosResponse;
@@ -126,7 +127,6 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
             response = await this.axiosShim.get(requestUrl.href, this.requestConfig);
         }
         catch (error: any) {
-            console.log(error);
             let typedError = <AxiosError>error;
             if (typedError.status! === 404) {
                 returnValue = false;
@@ -136,8 +136,48 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         if (response!.status === 200) {
             returnValue = true;
         }
+    }
 
-        return returnValue;
+    /**
+     * @name SendPostRequestAsync
+     * @desc Sends an HTTP POST request, expecting a 201 status returned to indicate success.
+     * 
+     * @param requestUrl - The URL of the request.
+     */
+    protected async SendPostRequestAsync(requestUrl: URL) : Promise<any> {
+
+        let response: AxiosResponse;
+        try {
+            response = await this.axiosShim.post(requestUrl.href, this.requestConfig);
+        }
+        catch (error: any) {
+            let typedError = <AxiosError>error;
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+        }
+        if (response!.status === 201) {
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, response!.status, response!.data);
+        }
+    }
+
+    /**
+     * @name SendDeleteRequestAsync
+     * @desc Sends an HTTP DELETE request, expecting a 200 status returned to indicate success.
+     * 
+     * @param requestUrl - The URL of the request.
+     */
+    protected async SendDeleteRequestAsync(requestUrl: URL) : Promise<any> {
+
+        let response: AxiosResponse;
+        try {
+            response = await this.axiosShim.delete(requestUrl.href, this.requestConfig);
+        }
+        catch (error: any) {
+            let typedError = <AxiosError>error;
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+        }
+        if (response!.status === 200) {
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, response!.status, response!.data);
+        }
     }
 
     /**
@@ -184,7 +224,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      */
     protected AppendPathToBaseUrl(path: string) : URL {
 
-        return this.baseUrl = new URL(this.baseUrl.href += path);
+        return this.baseUrl = new URL(this.baseUrl.href + path);
     }
 
     /**
@@ -196,7 +236,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
     protected InitializeBaseUrl(baseUrl: URL) : void {
 
         try {
-            this.baseUrl = new URL(baseUrl.href += "api/v1/");
+            this.baseUrl = new URL(baseUrl.href + "api/v1/");
         }
         catch (e) {
             throw new Error(`Failed to append API suffix to base URL '${baseUrl.href}'.`, { cause: e });

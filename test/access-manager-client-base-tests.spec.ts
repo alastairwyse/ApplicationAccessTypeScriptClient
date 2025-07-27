@@ -18,25 +18,46 @@ import { HttpRequestMethod } from '../src/http-request-method';
 import { HttpErrorResponse } from '../src/models/http-error-response';
 import { NotFoundError } from '../src/errors/not-found-error';
 import { ElementNotFoundError } from '../src/errors/element-not-found-error';
+import { StringUniqueStringifier } from '../src/string-unique-stringifier';
 import { IAxiosShim } from '../src/iaxios-shim';
 import { AccessManagerClientBase } from '../src/access-manager-client-base';
+import { AxiosResponse, AxiosHeaders, AxiosError } from 'axios';
 import { describe } from '@jest/globals';
-
-
-// TODO: Remove test imports'
-import axios, { AxiosResponse, AxiosRequestConfig, AxiosError, AxiosHeaders } from 'axios';
-import { StringUniqueStringifier } from '../src/string-unique-stringifier';
-
 
 /**
  * @desc Unit tests for the Buffer class.
  */
 describe("AccessManagerClientBase Tests", () => {
     let mockAxiosShim: IAxiosShim; 
+    let mockAxiosShimGetMethod: any;
+    let mockAxiosShimPostMethod: any;
+    let mockAxiosShimDeleteMethod: any;
     let testClientBase: AccessManagerClientBaseWithProtectedMethods<String, String, String, String>;
 
+    beforeEach(() => {
+        mockAxiosShim = <IAxiosShim><unknown>jest.mock("../src/iaxios-shim");
+        mockAxiosShim.get = jest.fn();
+        mockAxiosShimGetMethod = mockAxiosShim.get;
+        mockAxiosShim.post = jest.fn();
+        mockAxiosShimPostMethod = mockAxiosShim.post;
+        mockAxiosShim.delete = jest.fn();
+        mockAxiosShimDeleteMethod = mockAxiosShim.delete;
+        testClientBase = new AccessManagerClientBaseWithProtectedMethods(
+            new URL("http://127.0.0.1:5170/"), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new StringUniqueStringifier(), 
+            new Object(), 
+            mockAxiosShim
+        );
+    });
 
-/*  MOCKING AxiosError
+    afterEach(() => { 
+    });
+
+    it("SendGetRequestAsync(): UserNotFoundException exception.", async() => {
+        
         let responseData: AxiosResponse<unknown, any> = {
             data: {
                 error: {
@@ -64,37 +85,46 @@ describe("AccessManagerClientBase Tests", () => {
         };
         let axiosError = new AxiosError("Request failed with status code 404", "ERR_BAD_REQUEST");
         axiosError.response = responseData;
-*/
+        axiosError.status = 404;
+        mockAxiosShimGetMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
 
+        try {
+            await testClientBase.SendGetRequestAsync(new URL("http://127.0.0.1:5000/api/v1/userToGroupMappings/user/sdf?includeIndirectMappings=true"));
 
-    beforeEach(() => {
-        mockAxiosShim = <IAxiosShim><unknown>jest.mock("../src/iaxios-shim");
-        testClientBase = new AccessManagerClientBaseWithProtectedMethods(
-            new URL("http://127.0.0.1:5170/"), 
-            new StringUniqueStringifier(), 
-            new StringUniqueStringifier(), 
-            new StringUniqueStringifier(), 
-            new StringUniqueStringifier(), 
-            new Object(), 
-            mockAxiosShim
-        );
-    });
-
-    afterEach(() => { 
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(ElementNotFoundError);
+            expect(e.message).toBe("User 'sdf' does not exist. (Parameter 'user')");
+        }
+        expect(exceptionCaught).toBe(true); 
     });
 
     it("SendGetRequestAsync(): Success test.", async() => {
+        let responseData: AxiosResponse<unknown, any> = {
+            data: [
+                { user: "user1", group: "group1" },
+                { user: "user1", group: "group3" }
+            ],
+            status: 200, 
+            statusText: "OK",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        mockAxiosShimGetMethod.mockReturnValueOnce(responseData);
         
-        testClientBase = new AccessManagerClientBaseWithProtectedMethods(
-            new URL("http://127.0.0.1:5170/"), 
-            new StringUniqueStringifier(), 
-            new StringUniqueStringifier(), 
-            new StringUniqueStringifier(), 
-            new StringUniqueStringifier()
-        );
+        let result: any = await testClientBase.SendGetRequestAsync(new URL("http://127.0.0.1:5000/api/v1/userToGroupMappings/user/user1?includeIndirectMappings=true"));
 
-        let result = await testClientBase.SendGetRequestAsync(new URL("http://192.168.0.253:5000/api/v1/groups"));
-        console.log(JSON.stringify(result));
+        expect(result).toHaveLength(2);
+        expect(result[0].user).toEqual("user1");
+        expect(result[0].group).toEqual("group1");
+        expect(result[1].user).toEqual("user1");
+        expect(result[1].group).toEqual("group3");
     });
 
     it("HandleNonSuccessResponseStatus(): UserNotFoundException.", done => {
@@ -471,7 +501,7 @@ describe("AccessManagerClientBase Tests", () => {
  * @name AccessManagerClientBaseWithProtectedMethods
  * @desc Version of the AccessManagerClientBase class where protected members are exposed as public so that they can be unit tested.
  */
-class AccessManagerClientBaseWithProtectedMethods<TUser, TGroup, TComponent, TAccess> extends AccessManagerClientBase<TUser, TGroup, TComponent, TAccess> {
+export class AccessManagerClientBaseWithProtectedMethods<TUser, TGroup, TComponent, TAccess> extends AccessManagerClientBase<TUser, TGroup, TComponent, TAccess> {
 
     public async SendGetRequestAsync<T>(requestUrl: URL) : Promise<T> {
 

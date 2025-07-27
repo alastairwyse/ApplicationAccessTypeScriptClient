@@ -26,4 +26,12 @@ export class DefaultAxios implements IAxiosShim {
     public get(url: string, config: AxiosRequestConfig<any>) : Promise<AxiosResponse<any, any>> {
         return axios.get(url, config);
     }
+
+    public post(url: string, config: AxiosRequestConfig<any>) : Promise<AxiosResponse<any, any>> {
+        return axios.post(url, config);
+    }
+
+    public delete(url: string, config: AxiosRequestConfig<any>) : Promise<AxiosResponse<any, any>> {
+        return axios.delete(url, config);
+    }
 }

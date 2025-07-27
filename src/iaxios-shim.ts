@@ -24,4 +24,8 @@ import { AxiosResponse, AxiosRequestConfig } from 'axios';
 export interface IAxiosShim {
     
     get(url: string, config: AxiosRequestConfig<any>) : Promise<AxiosResponse<any, any>>;
+
+    post(url: string, config: AxiosRequestConfig<any>) : Promise<AxiosResponse<any, any>>;
+
+    delete(url: string, config: AxiosRequestConfig<any>) : Promise<AxiosResponse<any, any>>;
 }
