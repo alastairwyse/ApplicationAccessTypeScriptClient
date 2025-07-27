@@ -22,10 +22,11 @@ import { AccessManagerClientBaseWithProtectedMethods } from './access-manager-cl
 /**
  * @desc Integration tests for the Buffer class.
  */
-describe("AccessManagerClientBase Tests", () => {
+describe("AccessManagerClientBase Integration Tests", () => {
     let baseUrl: URL;
     let mockAxiosShim: IAxiosShim; 
     let testClientBase: AccessManagerClientBaseWithProtectedMethods<String, String, String, String>;
+
 
     beforeEach(() => {
         baseUrl = new URL("http://192.168.0.253:5000/");
@@ -39,8 +40,10 @@ describe("AccessManagerClientBase Tests", () => {
         );
     });
 
+
     afterEach(() => { 
     });
+
 
     it("SendGetRequestAsync(): IllegalArgumentException.", async() => {
 
@@ -58,6 +61,7 @@ describe("AccessManagerClientBase Tests", () => {
         }
         expect(exceptionCaught).toBe(true); 
     });
+
 
     it("SendGetRequestAsync(): ElementNotFoundException.", async() => {
 

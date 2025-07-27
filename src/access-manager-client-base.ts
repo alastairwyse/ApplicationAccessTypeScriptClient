@@ -102,8 +102,6 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         let response: AxiosResponse;
         try {
             response = await this.axiosShim.get(requestUrl.href, this.requestConfig);
-            console.log(typeof(response));
-            console.log(response);
         }
         catch (error: any) {
             let typedError = <AxiosError>error;
@@ -119,9 +117,8 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      * @param requestUrl - The URL of the request.
      * @returns True in the case a 200 response status is received, or false in the case a 404 status is received.
      */
-    protected async SendGetRequestForContainsMethodAsync(requestUrl: URL) : Promise<void> {
+    protected async SendGetRequestForContainsMethodAsync(requestUrl: URL) : Promise<boolean> {
         
-        let returnValue: boolean = false;
         let response: AxiosResponse;
         try {
             response = await this.axiosShim.get(requestUrl.href, this.requestConfig);
@@ -129,13 +126,15 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         catch (error: any) {
             let typedError = <AxiosError>error;
             if (typedError.status! === 404) {
-                returnValue = false;
+                return false;
             }
             this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
         }
         if (response!.status === 200) {
-            returnValue = true;
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -144,7 +143,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      * 
      * @param requestUrl - The URL of the request.
      */
-    protected async SendPostRequestAsync(requestUrl: URL) : Promise<any> {
+    protected async SendPostRequestAsync(requestUrl: URL) : Promise<void> {
 
         let response: AxiosResponse;
         try {
@@ -152,9 +151,9 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         }
         catch (error: any) {
             let typedError = <AxiosError>error;
-            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, typedError.status!, typedError.response?.data!);
         }
-        if (response!.status === 201) {
+        if (response!.status !== 201) {
             this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, response!.status, response!.data);
         }
     }
@@ -165,7 +164,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      * 
      * @param requestUrl - The URL of the request.
      */
-    protected async SendDeleteRequestAsync(requestUrl: URL) : Promise<any> {
+    protected async SendDeleteRequestAsync(requestUrl: URL) : Promise<void> {
 
         let response: AxiosResponse;
         try {
@@ -173,10 +172,10 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         }
         catch (error: any) {
             let typedError = <AxiosError>error;
-            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Delete, requestUrl, typedError.status!, typedError.response?.data!);
         }
-        if (response!.status === 200) {
-            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, response!.status, response!.data);
+        if (response!.status !== 200) {
+            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Delete, requestUrl, response!.status, response!.data);
         }
     }
 
@@ -269,7 +268,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
                     throw new ElementNotFoundError(httpErrorResponse.Message, "Entity", entity);
                 }
                 else {
-                    let resourceId: string =this.GetHttpErrorResponseAttributeValue(httpErrorResponse, "ResourceId");
+                    let resourceId: string = this.GetHttpErrorResponseAttributeValue(httpErrorResponse, "ResourceId");
                     throw new NotFoundError(httpErrorResponse.Message, resourceId);
                 }
             }

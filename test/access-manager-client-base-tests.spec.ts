@@ -34,6 +34,7 @@ describe("AccessManagerClientBase Tests", () => {
     let mockAxiosShimDeleteMethod: any;
     let testClientBase: AccessManagerClientBaseWithProtectedMethods<String, String, String, String>;
 
+
     beforeEach(() => {
         mockAxiosShim = <IAxiosShim><unknown>jest.mock("../src/iaxios-shim");
         mockAxiosShim.get = jest.fn();
@@ -53,8 +54,10 @@ describe("AccessManagerClientBase Tests", () => {
         );
     });
 
+
     afterEach(() => { 
     });
+
 
     it("SendGetRequestAsync(): UserNotFoundException exception.", async() => {
         
@@ -103,7 +106,9 @@ describe("AccessManagerClientBase Tests", () => {
         expect(exceptionCaught).toBe(true); 
     });
 
+
     it("SendGetRequestAsync(): Success test.", async() => {
+
         let responseData: AxiosResponse<unknown, any> = {
             data: [
                 { user: "user1", group: "group1" },
@@ -126,6 +131,287 @@ describe("AccessManagerClientBase Tests", () => {
         expect(result[1].user).toEqual("user1");
         expect(result[1].group).toEqual("group3");
     });
+
+
+    it("SendGetRequestForContainsMethodAsync(): ServiceUnavailableException exception.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: {
+                error: {
+                    code: "ServiceUnavailableException",
+                    message: "The service is unavailable due to an interal error.",
+                    target: "MoveNext"
+                }
+            },
+            status: 503, 
+            statusText: "Service Unavailable",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        let axiosError = new AxiosError("Request failed with status code 503", "ERR_SERVICE_UNAVAILABLE");
+        axiosError.response = responseData;
+        axiosError.status = 503;
+        mockAxiosShimGetMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendGetRequestForContainsMethodAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Get' method.  Received non-succces HTTP response status 503, error code 'ServiceUnavailableException', and error message 'The service is unavailable due to an interal error.'.");
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
+
+    it("SendGetRequestForContainsMethodAsync(): False result.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: {
+                error: {
+                    code: "NotFoundException",
+                    message: "User 'userx' does not exist.",
+                    target: "ContainsUser",
+                    attributes: [
+                        {
+                            name: "ResourceId",
+                            value: "userx"
+                        }
+                    ]
+                }
+            },
+            status: 404, 
+            statusText: "Service Unavailable",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        let axiosError = new AxiosError("Request failed with status code 404", "ERR_NOT_FOUND");
+        axiosError.response = responseData;
+        axiosError.status = 404;
+        mockAxiosShimGetMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+
+        let result: boolean = await testClientBase.SendGetRequestForContainsMethodAsync(new URL("http://127.0.0.1:5000/api/v1/users/userx"));
+
+        expect(result).toBe(false); 
+    });
+
+
+    it("SendGetRequestForContainsMethodAsync(): False true.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: "user1",
+            status: 200, 
+            statusText: "OK",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        mockAxiosShimGetMethod.mockReturnValueOnce(responseData);
+
+        let result: boolean = await testClientBase.SendGetRequestForContainsMethodAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        expect(result).toBe(true); 
+    });
+
+
+    it("SendPostRequestAsync(): ServiceUnavailableException exception.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: {
+                error: {
+                    code: "ServiceUnavailableException",
+                    message: "The service is unavailable due to an interal error.",
+                    target: "MoveNext"
+                }
+            },
+            status: 503, 
+            statusText: "Service Unavailable",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        let axiosError = new AxiosError("Request failed with status code 503", "ERR_SERVICE_UNAVAILABLE");
+        axiosError.response = responseData;
+        axiosError.status = 503;
+        mockAxiosShimPostMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendPostRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Post' method.  Received non-succces HTTP response status 503, error code 'ServiceUnavailableException', and error message 'The service is unavailable due to an interal error.'.");
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
+
+    it("SendPostRequestAsync(): Non 201 response.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: null,
+            status: 200, 
+            statusText: "OK",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        mockAxiosShimPostMethod.mockReturnValueOnce(responseData);
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendPostRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Post' method.  Received non-succces HTTP response status 200.");
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
+
+    it("SendPostRequestAsync(): Success test.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: null,
+            status: 201, 
+            statusText: "OK",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        mockAxiosShimPostMethod.mockReturnValueOnce(responseData);
+
+        await testClientBase.SendPostRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        expect(mockAxiosShimPostMethod.mock.calls[0][0]).toBe("http://127.0.0.1:5000/api/v1/users/user1");
+    });
+
+
+    it("SendDeleteRequestAsync(): ServiceUnavailableException exception.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: {
+                error: {
+                    code: "ServiceUnavailableException",
+                    message: "The service is unavailable due to an interal error.",
+                    target: "MoveNext"
+                }
+            },
+            status: 503, 
+            statusText: "Service Unavailable",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        let axiosError = new AxiosError("Request failed with status code 503", "ERR_SERVICE_UNAVAILABLE");
+        axiosError.response = responseData;
+        axiosError.status = 503;
+        mockAxiosShimDeleteMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendDeleteRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Delete' method.  Received non-succces HTTP response status 503, error code 'ServiceUnavailableException', and error message 'The service is unavailable due to an interal error.'.");
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
+
+    it("SendDeleteRequestAsync(): ServiceUnavailableException exception.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: {
+                error: {
+                    code: "ServiceUnavailableException",
+                    message: "The service is unavailable due to an interal error.",
+                    target: "MoveNext"
+                }
+            },
+            status: 503, 
+            statusText: "Service Unavailable",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        let axiosError = new AxiosError("Request failed with status code 503", "ERR_SERVICE_UNAVAILABLE");
+        axiosError.response = responseData;
+        axiosError.status = 503;
+        mockAxiosShimDeleteMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendDeleteRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Delete' method.  Received non-succces HTTP response status 503, error code 'ServiceUnavailableException', and error message 'The service is unavailable due to an interal error.'.");
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
+
+    it("SendDeleteRequestAsync(): Non 200 response.", async() => {
+        
+        let responseData: AxiosResponse<unknown, any> = {
+            data: null,
+            status: 201, 
+            statusText: "OK",
+            headers: new AxiosHeaders(), 
+            config: { 
+                headers: new AxiosHeaders()
+            }
+        };
+        mockAxiosShimDeleteMethod.mockReturnValueOnce(responseData);
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendDeleteRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Delete' method.  Received non-succces HTTP response status 201.");
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
 
     it("HandleNonSuccessResponseStatus(): UserNotFoundException.", done => {
         
@@ -165,6 +451,7 @@ describe("AccessManagerClientBase Tests", () => {
         done();
     });
 
+
     it("HandleNonSuccessResponseStatus(): GroupNotFoundException.", done => {
         
         let url = new URL("http://127.0.0.1:5000/api/v1/groupToGroupMappings/group/abc?includeIndirectMappings=false");
@@ -203,6 +490,7 @@ describe("AccessManagerClientBase Tests", () => {
         done();
     });
 
+
     it("HandleNonSuccessResponseStatus(): EntityTypeNotFoundException.", done => {
         
         let url = new URL("http://127.0.0.1:5000/api/v1/entityTypes/dfg/entities");
@@ -240,6 +528,7 @@ describe("AccessManagerClientBase Tests", () => {
 
         done();
     });
+
 
     it("HandleNonSuccessResponseStatus(): EntityNotFoundException.", done => {
         
@@ -283,6 +572,7 @@ describe("AccessManagerClientBase Tests", () => {
         done();
     });
 
+
     it("HandleNonSuccessResponseStatus(): NotFoundException.", done => {
         
         let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
@@ -316,6 +606,7 @@ describe("AccessManagerClientBase Tests", () => {
         done();
     });
 
+
     it("HandleNonSuccessResponseStatus(): ServiceUnavailableException.", done => {
         
         let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
@@ -341,6 +632,7 @@ describe("AccessManagerClientBase Tests", () => {
 
         done();
     });
+
 
     it("HandleNonSuccessResponseStatus(): String response body.", done => {
         
@@ -382,6 +674,7 @@ describe("AccessManagerClientBase Tests", () => {
         done();
     });
 
+
     it("HandleNonSuccessResponseStatus(): Empty string response body.", done => {
         
         let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
@@ -402,6 +695,7 @@ describe("AccessManagerClientBase Tests", () => {
         done();
     });
 
+
     it("HandleNonSuccessResponseStatus(): Null response body.", done => {
         
         let url = new URL("http://127.0.0.1:5000/api/v1/groups/xyz");
@@ -421,6 +715,7 @@ describe("AccessManagerClientBase Tests", () => {
 
         done();
     });
+
 
     it("DeserializeResponseDataToHttpErrorResponse(): Success test.", done => {
         
@@ -503,14 +798,29 @@ describe("AccessManagerClientBase Tests", () => {
  */
 export class AccessManagerClientBaseWithProtectedMethods<TUser, TGroup, TComponent, TAccess> extends AccessManagerClientBase<TUser, TGroup, TComponent, TAccess> {
 
-    public async SendGetRequestAsync<T>(requestUrl: URL) : Promise<T> {
+    public async SendGetRequestAsync(requestUrl: URL) : Promise<any> {
 
         return await super.SendGetRequestAsync(requestUrl);
     }
 
+    public async SendGetRequestForContainsMethodAsync(requestUrl: URL) : Promise<any> {
+
+        return await super.SendGetRequestForContainsMethodAsync(requestUrl);
+    }
+
+    public async SendPostRequestAsync(requestUrl: URL) : Promise<void> {
+
+        await super.SendPostRequestAsync(requestUrl);
+    }
+
+    public async SendDeleteRequestAsync(requestUrl: URL) : Promise<void> {
+
+        await super.SendDeleteRequestAsync(requestUrl);
+    }
+
     public HandleNonSuccessResponseStatus(method: HttpRequestMethod, requestUrl: URL, status: number, responseData: any) : void {
 
-        return super.HandleNonSuccessResponseStatus(method, requestUrl, status, responseData)
+        super.HandleNonSuccessResponseStatus(method, requestUrl, status, responseData)
     }
 
     public DeserializeResponseDataToHttpErrorResponse(responseData: any) : HttpErrorResponse | null {
