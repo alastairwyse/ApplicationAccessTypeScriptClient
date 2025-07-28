@@ -17,7 +17,9 @@
 import { ElementNotFoundError } from '../src/errors/element-not-found-error';
 import { StringUniqueStringifier } from '../src/string-unique-stringifier';
 import { IAxiosShim } from '../src/iaxios-shim';
+import { DefaultAxios } from '../src/default-axios';
 import { AccessManagerClientBaseWithProtectedMethods } from './access-manager-client-base-tests.spec';
+import { AxiosHeaders } from 'axios';
 
 /**
  * @desc Integration tests for the Buffer class.
@@ -36,7 +38,9 @@ describe("AccessManagerClientBase Integration Tests", () => {
             new StringUniqueStringifier(), 
             new StringUniqueStringifier(), 
             new StringUniqueStringifier(), 
-            new StringUniqueStringifier()
+            new StringUniqueStringifier(), 
+            { headers: new AxiosHeaders() }, 
+            new DefaultAxios()
         );
     });
 

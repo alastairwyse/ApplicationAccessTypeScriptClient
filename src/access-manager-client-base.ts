@@ -22,7 +22,7 @@ import { NotFoundError } from './errors/not-found-error';
 import { ElementNotFoundError } from './errors/element-not-found-error';
 import { IAxiosShim } from './iaxios-shim';
 import { DefaultAxios } from './default-axios';
-import axios, { AxiosResponse, AxiosRequestConfig, AxiosHeaders, AxiosError } from 'axios';
+import { AxiosResponse, AxiosRequestConfig, AxiosHeaders, AxiosError } from 'axios';
 
 /**
  * @name AccessManagerClientBase
@@ -68,7 +68,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      * @param requestConfig - (Optional) axios request config to use for making HTTP requests.  Allows specifying request headers, timeouts, etc.
      * @param axiosShim - (Optional) {@link https://en.wikipedia.org/wiki/Shim_(computing)| Shim} to axios for use in unit testing.
      */
-    constructor(
+    constructor (
         baseUrl: URL,
         userStringifier: IUniqueStringifier<TUser>, 
         groupStringifier: IUniqueStringifier<TGroup>, 

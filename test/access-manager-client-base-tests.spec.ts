@@ -25,7 +25,7 @@ import { AxiosResponse, AxiosHeaders, AxiosError } from 'axios';
 import { describe } from '@jest/globals';
 
 /**
- * @desc Unit tests for the Buffer class.
+ * @desc Unit tests for the AccessManagerClientBase class.
  */
 describe("AccessManagerClientBase Tests", () => {
     let mockAxiosShim: IAxiosShim; 
