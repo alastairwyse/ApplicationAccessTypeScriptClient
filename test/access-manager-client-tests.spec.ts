@@ -22,6 +22,9 @@ import { AccessManagerClient } from '../src/access-manager-client';
  * @desc Unit tests for the AccessManagerClient class.
  */
 describe("AccessManagerClient Tests", () => {
+
+    const urlReservedCharacters = "! * ' ( ) ; : @ & = + $ , / ? % # [ ]";
+
     let userStringifier: CallCountingStringUniqueStringifier;
     let groupStringifier: CallCountingStringUniqueStringifier;
     let componentStringifier: CallCountingStringUniqueStringifier;
