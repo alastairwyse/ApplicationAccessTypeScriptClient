@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
+import { ApplicationScreen } from './application-screen';
+import { AccessLevel } from './access-level';
+import { IUniqueStringifier } from '../src/iunique-stringifier';
 import { StringUniqueStringifier } from '../src/string-unique-stringifier';
-import { IAxiosShim } from '../src/iaxios-shim';
 import { AccessManagerClient } from '../src/access-manager-client';
 
 /**
- * @desc Unit tests for the AccessManagerClient class.
+ * @desc Integration tests for the AccessManagerClient class.
  */
-describe("AccessManagerClient Tests", () => {
+describe("AccessManagerClient Integration Tests", () => {
 
     const urlReservedCharacters = "! * ' ( ) ; : @ & = + $ , / ? % # [ ]";
 
@@ -37,7 +39,8 @@ describe("AccessManagerClient Tests", () => {
         componentStringifier = new CallCountingStringUniqueStringifier;
         accessStringifier = new CallCountingStringUniqueStringifier;
         testClient = new AccessManagerClient(
-            new URL("http://127.0.0.1:5170/"), 
+            // new URL("http://127.0.0.1:5170/"), 
+            new URL("http://192.168.0.253:5000/"), 
             userStringifier, 
             groupStringifier, 
             componentStringifier, 
@@ -55,10 +58,42 @@ describe("AccessManagerClient Tests", () => {
 });
 
 /**
+ * @name ApplicationScreenStringifier
+ * @desc Implementation of {@link IUniqueStringifier} for {@link ApplicationScreen | ApplicationScreens} .
+ */
+class ApplicationScreenStringifier implements IUniqueStringifier<ApplicationScreen> {
+
+    ToString(inputObject: ApplicationScreen): string {
+        
+        return inputObject.toString();
+    }
+    FromString(stringifiedObject: string): ApplicationScreen {
+        
+        return ApplicationScreen[stringifiedObject as keyof typeof ApplicationScreen];
+    }
+}
+
+/**
+ * @name AccessLevelStringifier
+ * @desc Implementation of {@link IUniqueStringifier} for {@link AccessLevel | AccessLevel} .
+ */
+class AccessLevelStringifier implements IUniqueStringifier<AccessLevel> {
+
+    ToString(inputObject: AccessLevel): string {
+        
+        return inputObject.toString();
+    }
+    FromString(stringifiedObject: string): AccessLevel {
+        
+        return AccessLevel[stringifiedObject as keyof typeof AccessLevel];
+    }
+}
+
+/**
  * @name CallCountingStringUniqueStringifier
  * @desc Subclass of {@link StringUniqueStringifier} which counts the number of calls to its public methods.
  */
-export class CallCountingStringUniqueStringifier extends StringUniqueStringifier {
+class CallCountingStringUniqueStringifier extends StringUniqueStringifier {
 
     /** The number of times the ToString() method has been called. */
     protected toStringCount: number;

@@ -392,7 +392,15 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
 
     /** @inheritdoc */
     public async GetEntities(entityType: string) : Promise<Array<string>> {
-        throw new Error('Method not implemented.');
+        
+        let url: URL = this.AppendPathToBaseUrl(`entityTypes/${encodeURIComponent(entityType)}/entities`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Array<string>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.push(rawResults[i].entity);
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
@@ -423,17 +431,50 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
 
     /** @inheritdoc */
     public async GetUserToEntityMappings(user: TUser) : Promise<Array<EntityTypeAndEntity>> {
-        throw new Error('Method not implemented.');
+        
+        let url: URL = this.AppendPathToBaseUrl(`userToEntityMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}?includeIndirectMappings=false`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Array<EntityTypeAndEntity>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.push(
+                new EntityTypeAndEntity(
+                    rawResults[i].entityType, 
+                    rawResults[i].entity
+                ) 
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetUserToEntityMappingsForType(user: TUser, entityType: string) : Promise<Array<string>> {
-        throw new Error('Method not implemented.');
+        
+        let url: URL = this.AppendPathToBaseUrl(`userToEntityMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}?includeIndirectMappings=false`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Array<string>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.push(
+                rawResults[i].entity
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetEntityToUserMappings(entityType: string, entity: string, includeIndirectMappings: boolean) : Promise<Array<TUser>> {
-        throw new Error('Method not implemented.');
+        
+        let url: URL = this.AppendPathToBaseUrl(`userToEntityMappings/entities/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}?includeIndirectMappings=${includeIndirectMappings}`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Array<TUser>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.push(
+                this.userStringifier.FromString(rawResults[i].user)
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
@@ -458,17 +499,50 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
 
     /** @inheritdoc */
     public async GetGroupToEntityMappings(group: TGroup) : Promise<Array<EntityTypeAndEntity>> {
-        throw new Error('Method not implemented.');
+        
+        let url: URL = this.AppendPathToBaseUrl(`groupToEntityMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=false`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Array<EntityTypeAndEntity>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.push(
+                new EntityTypeAndEntity(
+                    rawResults[i].entityType, 
+                    rawResults[i].entity
+                ) 
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetGroupToEntityMappingsForType(group: TGroup, entityType: string) : Promise<Array<string>> {
-        throw new Error('Method not implemented.');
+        
+        let url: URL = this.AppendPathToBaseUrl(`groupToEntityMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}/entityType/${encodeURIComponent(entityType)}?includeIndirectMappings=false`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Array<string>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.push(
+                rawResults[i].entity
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetEntityToGroupMappings(entityType: string, entity: string, includeIndirectMappings: boolean) : Promise<Array<TGroup>> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(`groupToEntityMappings/entities/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}?includeIndirectMappings=${includeIndirectMappings}`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Array<TGroup>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.push(
+                this.groupStringifier.FromString(rawResults[i].group)
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
@@ -483,41 +557,123 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
 
     /** @inheritdoc */
     public async HasAccessToApplicationComponent(user: TUser, applicationComponent: TComponent, accessLevel: TAccess) : Promise<boolean> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(
+            `dataElementAccess/applicationComponent/${encodeURIComponent(this.userStringifier.ToString(user))}/applicationComponent/${encodeURIComponent(this.applicationComponentStringifier.ToString(applicationComponent))}/accessLevel/${encodeURIComponent(this.accessLevelStringifier.ToString(accessLevel))}`
+        );
+        
+        return await this.SendGetRequestAsync(url);
     }
 
     /** @inheritdoc */
     public async HasAccessToEntity(user: TUser, entityType: string, entity: string) : Promise<boolean> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(
+            `dataElementAccess/applicationComponent/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
+        );
+        
+        return await this.SendGetRequestAsync(url);
     }
     
     /** @inheritdoc */
     public async GetApplicationComponentsAccessibleByUser(user: TUser) : Promise<Set<ApplicationComponentAndAccessLevel<TComponent, TAccess>>> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(`userToApplicationComponentAndAccessLevelMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}?includeIndirectMappings=true`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Set<ApplicationComponentAndAccessLevel<TComponent, TAccess>>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.add(
+                new ApplicationComponentAndAccessLevel<TComponent, TAccess>(
+                    this.applicationComponentStringifier.FromString(rawResults[i].applicationComponent), 
+                    this.accessLevelStringifier.FromString(rawResults[i].accessLevel)
+                ) 
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetApplicationComponentsAccessibleByGroup(group: TGroup) : Promise<Set<ApplicationComponentAndAccessLevel<TComponent, TAccess>>> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(`groupToApplicationComponentAndAccessLevelMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=true`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Set<ApplicationComponentAndAccessLevel<TComponent, TAccess>>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.add(
+                new ApplicationComponentAndAccessLevel<TComponent, TAccess>(
+                    this.applicationComponentStringifier.FromString(rawResults[i].applicationComponent), 
+                    this.accessLevelStringifier.FromString(rawResults[i].accessLevel)
+                ) 
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetEntitiesAccessibleByUser(user: TUser) : Promise<Set<EntityTypeAndEntity>> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(`userToEntityMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}?includeIndirectMappings=true`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Set<EntityTypeAndEntity>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.add(
+                new EntityTypeAndEntity(
+                    rawResults[i].entityType, 
+                    rawResults[i].entity
+                ) 
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetEntitiesOfTypeAccessibleByUser(user: TUser, entityType: string) : Promise<Set<string>> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(`userToEntityMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}?includeIndirectMappings=true`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Set<string>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.add(
+                rawResults[i].entity
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetEntitiesAccessibleByGroup(group: TGroup) : Promise<Set<EntityTypeAndEntity>> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(`groupToEntityMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=true`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Set<EntityTypeAndEntity>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.add(
+                new EntityTypeAndEntity(
+                    rawResults[i].entityType, 
+                    rawResults[i].entity
+                ) 
+            );
+        }
+
+        return results;
     }
 
     /** @inheritdoc */
     public async GetEntitiesOfTypeAccessibleByGroup(group: TGroup, entityType: string) : Promise<Set<string>> {
-        throw new Error('Method not implemented.');
+
+        let url: URL = this.AppendPathToBaseUrl(`groupToEntityMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}/entityType/${encodeURIComponent(entityType)}?includeIndirectMappings=true`);
+        let rawResults: Array<any> = await this.SendGetRequestAsync(url);
+        let results = new Set<string>();
+        for (let i: number = 0; i < rawResults.length; i++) {
+            results.add(
+                rawResults[i].entity
+            );
+        }
+
+        return results;
     }
 }
