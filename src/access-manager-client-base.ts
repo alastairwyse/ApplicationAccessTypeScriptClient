@@ -105,7 +105,12 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         }
         catch (error: any) {
             let typedError = <AxiosError>error;
-            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+            if (typedError.status !== undefined) {
+                this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+            }
+            else {
+                this.HandleAxiosError(HttpRequestMethod.Get, requestUrl, typedError);
+            }
         }
         return response!.data;
     }
@@ -128,7 +133,12 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
             if (typedError.status! === 404) {
                 return false;
             }
-            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+            if (typedError.status !== undefined) {
+                this.HandleNonSuccessResponseStatus(HttpRequestMethod.Get, requestUrl, typedError.status!, typedError.response?.data!);
+            }
+            else {
+                this.HandleAxiosError(HttpRequestMethod.Get, requestUrl, typedError);
+            }
         }
         if (response!.status === 200) {
             return true;
@@ -151,7 +161,12 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         }
         catch (error: any) {
             let typedError = <AxiosError>error;
-            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, typedError.status!, typedError.response?.data!);
+            if (typedError.status !== undefined) {
+                this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, typedError.status!, typedError.response?.data!);
+            }
+            else {
+                this.HandleAxiosError(HttpRequestMethod.Post, requestUrl, typedError);
+            }
         }
         if (response!.status !== 201) {
             this.HandleNonSuccessResponseStatus(HttpRequestMethod.Post, requestUrl, response!.status, response!.data);
@@ -172,9 +187,15 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
         }
         catch (error: any) {
             let typedError = <AxiosError>error;
-            this.HandleNonSuccessResponseStatus(HttpRequestMethod.Delete, requestUrl, typedError.status!, typedError.response?.data!);
+            if (typedError.status !== undefined) {
+                this.HandleNonSuccessResponseStatus(HttpRequestMethod.Delete, requestUrl, typedError.status!, typedError.response?.data!);
+            }
+            else {
+                this.HandleAxiosError(HttpRequestMethod.Delete, requestUrl, typedError);
+            }
         }
         if (response!.status !== 200) {
+
             this.HandleNonSuccessResponseStatus(HttpRequestMethod.Delete, requestUrl, response!.status, response!.data);
         }
     }
@@ -223,7 +244,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      */
     protected AppendPathToBaseUrl(path: string) : URL {
 
-        return this.baseUrl = new URL(this.baseUrl.href + path);
+        return new URL(this.baseUrl.href + path);
     }
 
     /**
@@ -276,6 +297,19 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
     }
 
     /**
+     * @name HandleAxiosError
+     * @desc Handles an {@link AxiosError}.
+     * 
+     * @param method - The HTTP method used in the request which generated the response.
+     * @param requestUrl - The URL of the request which generated the response.
+     * @param error - The {@link AxiosError} to handle.
+     */
+    protected HandleAxiosError(method: HttpRequestMethod, requestUrl: URL, error: AxiosError) : void {
+
+        throw new Error(`Failed to call URL '${requestUrl.toString()}' with '${method}' method.  ${error.message}`, { cause: error });
+    }
+
+    /**
      * @name HandleNonSuccessResponseStatus
      * @desc Handles receipt of a non-success HTTP response status, by converting the status and response body to an appropriate Error and throwing that Error.
 
@@ -300,7 +334,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
             }
         }
         else {
-            if (responseData !== null) {
+            if (responseData !== undefined && responseData !== null) {
                 if (typeof(responseData) === AccessManagerClientBase.javaScriptObjectType) {
                     throw new Error(baseExceptionMessage + `, and response body '${JSON.stringify(responseData)}'.`);
                 }
@@ -323,7 +357,7 @@ export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess
      */
     protected DeserializeResponseDataToHttpErrorResponse(responseData: any) : HttpErrorResponse | null {
 
-        if (responseData === null) {
+        if (responseData === undefined || responseData === null) {
             return null;
         }
         if (responseData.hasOwnProperty("error") && typeof(responseData.error) === AccessManagerClientBase.javaScriptObjectType) {

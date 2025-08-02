@@ -59,6 +59,28 @@ describe("AccessManagerClientBase Tests", () => {
     });
 
 
+    it("SendGetRequestAsync(): Connection refused.", async() => {
+
+        let axiosError = new AxiosError("connect ECONNREFUSED 127.0.0.1:5000", "ECONNREFUSED");
+        mockAxiosShimGetMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendGetRequestAsync(new URL("http://127.0.0.1:5000/api/v1/userToGroupMappings/user/sdf?includeIndirectMappings=true"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/userToGroupMappings/user/sdf?includeIndirectMappings=true' with 'Get' method.  connect ECONNREFUSED 127.0.0.1:5000");
+            expect(e.cause).toBe(axiosError);
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
+
     it("SendGetRequestAsync(): UserNotFoundException exception.", async() => {
         
         let responseData: AxiosResponse<unknown, any> = {
@@ -130,6 +152,28 @@ describe("AccessManagerClientBase Tests", () => {
         expect(result[0].group).toEqual("group1");
         expect(result[1].user).toEqual("user1");
         expect(result[1].group).toEqual("group3");
+    });
+
+
+    it("SendGetRequestForContainsMethodAsync(): Connection refused.", async() => {
+
+        let axiosError = new AxiosError("connect ECONNREFUSED 127.0.0.1:5000", "ECONNREFUSED");
+        mockAxiosShimGetMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendGetRequestForContainsMethodAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Get' method.  connect ECONNREFUSED 127.0.0.1:5000");
+            expect(e.cause).toBe(axiosError);
+        }
+        expect(exceptionCaught).toBe(true); 
     });
 
 
@@ -226,6 +270,28 @@ describe("AccessManagerClientBase Tests", () => {
     });
 
 
+    it("SendPostRequestAsync(): Connection refused.", async() => {
+
+        let axiosError = new AxiosError("connect ECONNREFUSED 127.0.0.1:5000", "ECONNREFUSED");
+        mockAxiosShimPostMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendPostRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Post' method.  connect ECONNREFUSED 127.0.0.1:5000");
+            expect(e.cause).toBe(axiosError);
+        }
+        expect(exceptionCaught).toBe(true); 
+    });
+
+
     it("SendPostRequestAsync(): ServiceUnavailableException exception.", async() => {
         
         let responseData: AxiosResponse<unknown, any> = {
@@ -307,6 +373,28 @@ describe("AccessManagerClientBase Tests", () => {
         await testClientBase.SendPostRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
 
         expect(mockAxiosShimPostMethod.mock.calls[0][0]).toBe("http://127.0.0.1:5000/api/v1/users/user1");
+    });
+
+
+    it("SendDeleteRequestAsync(): Connection refused.", async() => {
+
+        let axiosError = new AxiosError("connect ECONNREFUSED 127.0.0.1:5000", "ECONNREFUSED");
+        mockAxiosShimDeleteMethod.mockImplementation(() => {
+            throw axiosError;
+        });
+        let exceptionCaught: boolean = false;
+
+        try {
+            await testClientBase.SendDeleteRequestAsync(new URL("http://127.0.0.1:5000/api/v1/users/user1"));
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Delete' method.  connect ECONNREFUSED 127.0.0.1:5000");
+            expect(e.cause).toBe(axiosError);
+        }
+        expect(exceptionCaught).toBe(true); 
     });
 
 
@@ -410,6 +498,27 @@ describe("AccessManagerClientBase Tests", () => {
             expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Delete' method.  Received non-succces HTTP response status 201.");
         }
         expect(exceptionCaught).toBe(true); 
+    });
+
+
+    it("HandleAxiosError(): Success test.", done => {
+
+        let axiosError = new AxiosError("Test Axios error message.", "Test Axios error code");
+        let exceptionCaught: boolean = false;
+
+        try {
+            testClientBase.HandleAxiosError(HttpRequestMethod.Get, new URL("http://127.0.0.1:5000/api/v1/users/user1"), axiosError);
+
+        }
+        catch (e: any) {
+            exceptionCaught = true;
+            expect(e).toBeInstanceOf(Error);
+            expect(e.message).toBe("Failed to call URL 'http://127.0.0.1:5000/api/v1/users/user1' with 'Get' method.  Test Axios error message.");
+            expect(e.cause).toBe(axiosError);
+        }
+        expect(exceptionCaught).toBe(true); 
+
+        done();
     });
 
 
@@ -792,6 +901,8 @@ describe("AccessManagerClientBase Tests", () => {
 
 });
 
+//#region Nested Classes
+
 /**
  * @name AccessManagerClientBaseWithProtectedMethods
  * @desc Version of the AccessManagerClientBase class where protected members are exposed as public so that they can be unit tested.
@@ -818,6 +929,11 @@ export class AccessManagerClientBaseWithProtectedMethods<TUser, TGroup, TCompone
         await super.SendDeleteRequestAsync(requestUrl);
     }
 
+    public HandleAxiosError(method: HttpRequestMethod, requestUrl: URL, error: AxiosError) : void {
+
+        super.HandleAxiosError(method, requestUrl, error);
+    }
+
     public HandleNonSuccessResponseStatus(method: HttpRequestMethod, requestUrl: URL, status: number, responseData: any) : void {
 
         super.HandleNonSuccessResponseStatus(method, requestUrl, status, responseData)
@@ -828,3 +944,5 @@ export class AccessManagerClientBaseWithProtectedMethods<TUser, TGroup, TCompone
         return super.DeserializeResponseDataToHttpErrorResponse(responseData);
     }
 }
+
+//#endregion

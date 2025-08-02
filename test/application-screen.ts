@@ -25,5 +25,5 @@ export enum ApplicationScreen {
     Settings = "Settings", 
     Delivery = "Delivery", 
     Review = "Review", 
-    ReservedCharacters = "ReservedCharacters"
+    ReservedCharacters = "! * ' ( ) ; : @ & = + $ , / ? % # [ ]"
 }

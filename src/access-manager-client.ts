@@ -162,7 +162,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async GetUserToGroupMappings(user: TUser, includeIndirectMappings: boolean) : Promise<Array<TGroup>> {
         
         let url: URL = this.AppendPathToBaseUrl(
-            `userToGroupMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}?includeIndirectMappings=${includeIndirectMappings})}`
+            `userToGroupMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}?includeIndirectMappings=${includeIndirectMappings}`
         );
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TGroup>();
@@ -177,7 +177,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async GetGroupToUserMappings(group: TGroup, includeIndirectMappings: boolean) : Promise<Array<TUser>> {
         
         let url: URL = this.AppendPathToBaseUrl(
-            `userToGroupMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=${includeIndirectMappings})}`
+            `userToGroupMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=${includeIndirectMappings}`
         );
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TUser>();
@@ -212,7 +212,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async GetGroupToGroupMappings(group: TGroup, includeIndirectMappings: boolean) : Promise<Array<TGroup>> {
         
         let url: URL = this.AppendPathToBaseUrl(
-            `groupToGroupMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=${includeIndirectMappings})}`
+            `groupToGroupMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=${includeIndirectMappings}`
         );
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TGroup>();
@@ -227,7 +227,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async GetGroupToGroupReverseMappings(group: TGroup, includeIndirectMappings: boolean) : Promise<Array<TGroup>> {
         
         let url: URL = this.AppendPathToBaseUrl(
-            `groupToGroupReverseMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=${includeIndirectMappings})}`
+            `groupToGroupReverseMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}?includeIndirectMappings=${includeIndirectMappings}`
         );
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TGroup>();
@@ -423,7 +423,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async AddUserToEntityMapping(user: TUser, entityType: string, entity: string) : Promise<void> {
 
         let url: URL = this.AppendPathToBaseUrl(
-            `userToApplicationComponentAndAccessLevelMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
+            `userToEntityMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
         );
 
         await this.SendPostRequestAsync(url);
@@ -465,7 +465,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     /** @inheritdoc */
     public async GetEntityToUserMappings(entityType: string, entity: string, includeIndirectMappings: boolean) : Promise<Array<TUser>> {
         
-        let url: URL = this.AppendPathToBaseUrl(`userToEntityMappings/entities/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}?includeIndirectMappings=${includeIndirectMappings}`);
+        let url: URL = this.AppendPathToBaseUrl(`userToEntityMappings/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}?includeIndirectMappings=${includeIndirectMappings}`);
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TUser>();
         for (let i: number = 0; i < rawResults.length; i++) {
@@ -481,7 +481,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async RemoveUserToEntityMapping(user: TUser, entityType: string, entity: string) : Promise<void> {
 
         let url: URL = this.AppendPathToBaseUrl(
-            `userToApplicationComponentAndAccessLevelMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
+            `userToEntityMappings/user/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
         );
 
         await this.SendDeleteRequestAsync(url);
@@ -491,7 +491,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async AddGroupToEntityMapping(group: TGroup, entityType: string, entity: string) : Promise<void> {
 
         let url: URL = this.AppendPathToBaseUrl(
-            `groupToApplicationComponentAndAccessLevelMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
+            `groupToEntityMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
         );
 
         await this.SendPostRequestAsync(url);
@@ -533,7 +533,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     /** @inheritdoc */
     public async GetEntityToGroupMappings(entityType: string, entity: string, includeIndirectMappings: boolean) : Promise<Array<TGroup>> {
 
-        let url: URL = this.AppendPathToBaseUrl(`groupToEntityMappings/entities/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}?includeIndirectMappings=${includeIndirectMappings}`);
+        let url: URL = this.AppendPathToBaseUrl(`groupToEntityMappings/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}?includeIndirectMappings=${includeIndirectMappings}`);
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TGroup>();
         for (let i: number = 0; i < rawResults.length; i++) {
@@ -549,7 +549,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async RemoveGroupToEntityMapping(group: TGroup, entityType: string, entity: string) : Promise<void> {
 
         let url: URL = this.AppendPathToBaseUrl(
-            `groupToApplicationComponentAndAccessLevelMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
+            `groupToEntityMappings/group/${encodeURIComponent(this.groupStringifier.ToString(group))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
         );
 
         await this.SendDeleteRequestAsync(url);
@@ -559,7 +559,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async HasAccessToApplicationComponent(user: TUser, applicationComponent: TComponent, accessLevel: TAccess) : Promise<boolean> {
 
         let url: URL = this.AppendPathToBaseUrl(
-            `dataElementAccess/applicationComponent/${encodeURIComponent(this.userStringifier.ToString(user))}/applicationComponent/${encodeURIComponent(this.applicationComponentStringifier.ToString(applicationComponent))}/accessLevel/${encodeURIComponent(this.accessLevelStringifier.ToString(accessLevel))}`
+            `dataElementAccess/applicationComponent/user/${encodeURIComponent(this.userStringifier.ToString(user))}/applicationComponent/${encodeURIComponent(this.applicationComponentStringifier.ToString(applicationComponent))}/accessLevel/${encodeURIComponent(this.accessLevelStringifier.ToString(accessLevel))}`
         );
         
         return await this.SendGetRequestAsync(url);
@@ -569,7 +569,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
     public async HasAccessToEntity(user: TUser, entityType: string, entity: string) : Promise<boolean> {
 
         let url: URL = this.AppendPathToBaseUrl(
-            `dataElementAccess/applicationComponent/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
+            `dataElementAccess/entity/user/${encodeURIComponent(this.userStringifier.ToString(user))}/entityType/${encodeURIComponent(entityType)}/entity/${encodeURIComponent(entity)}`
         );
         
         return await this.SendGetRequestAsync(url);

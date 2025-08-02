@@ -23,5 +23,5 @@ export enum AccessLevel {
     Create = "Create", 
     Modify = "Modify", 
     Delete = "Delete", 
-    ReservedCharacters = "ReservedCharacters"
+    ReservedCharacters = "! * ' ( ) ; : @ & = + $ , / ? % # [ ]"
 }
