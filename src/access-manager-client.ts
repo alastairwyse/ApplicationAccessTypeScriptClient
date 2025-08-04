@@ -217,7 +217,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TGroup>();
         for (let i: number = 0; i < rawResults.length; i++) {
-            results.push(this.groupStringifier.FromString(rawResults[i].group));
+            results.push(this.groupStringifier.FromString(rawResults[i].toGroup));
         }
 
         return results;
@@ -232,7 +232,7 @@ export class AccessManagerClient<TUser, TGroup, TComponent, TAccess>
         let rawResults: Array<any> = await this.SendGetRequestAsync(url);
         let results = new Array<TGroup>();
         for (let i: number = 0; i < rawResults.length; i++) {
-            results.push(this.groupStringifier.FromString(rawResults[i].group));
+            results.push(this.groupStringifier.FromString(rawResults[i].fromGroup));
         }
 
         return results;
