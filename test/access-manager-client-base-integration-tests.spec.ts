@@ -31,7 +31,7 @@ describe("AccessManagerClientBase Integration Tests", () => {
 
 
     beforeEach(() => {
-        baseUrl = new URL("http://192.168.0.253:5000/");
+        baseUrl = new URL("http://127.0.0.1:5170/");
         mockAxiosShim = <IAxiosShim><unknown>jest.mock("../src/iaxios-shim");
         testClientBase = new AccessManagerClientBaseWithProtectedMethods(
             baseUrl,

@@ -64,8 +64,7 @@ describe("AccessManagerClient Integration Tests", () => {
         componentStringifier = new ApplicationScreenStringifier;
         accessStringifier = new AccessLevelStringifier;
         testClient = new AccessManagerClient(
-            // new URL("http://127.0.0.1:5170/"), 
-            new URL("http://192.168.0.253:5000/"), 
+            new URL("http://127.0.0.1:5170/"), 
             userStringifier, 
             groupStringifier, 
             componentStringifier, 

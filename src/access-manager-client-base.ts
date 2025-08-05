@@ -35,9 +35,6 @@ import { AxiosResponse, AxiosRequestConfig, AxiosHeaders, AxiosError } from 'axi
  */
 export abstract class AccessManagerClientBase<TUser, TGroup, TComponent, TAccess> {
 
-    // TODO:
-    //   Create AccessManagerStringElementClient
-
     static readonly javaScriptObjectType: string = "object";
 
     /** Axios request config to use for making HTTP requests. */
